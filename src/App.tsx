@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, Trophy, Flame, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
+import { Trophy, Flame, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
 import Dexie from 'dexie';
+
+// 单词类型定义
+interface Vocab {
+  id: number;
+  word: string;
+  meaning: string;
+  phonetic: string;
+  mastered: boolean;
+  reviewLevel: number;
+  nextReview: number;
+}
 
 // 1. 数据库定义
 class VocabDB extends Dexie {
-  words: Dexie.Table<any, number>;
+  words!: Dexie.Table<Vocab, number>;
   constructor() {
     super('GaokaoVocab');
     this.version(1).stores({ words: 'id, mastered, reviewLevel, nextReview' });
@@ -17,12 +28,12 @@ const db = new VocabDB();
 const SRS_INTERVALS = [0, 1, 3, 7, 15, 30];
 
 export default function App() {
-  const [currentWords, setCurrentWords] = useState([]); // 今日待学
+  const [currentWords, setCurrentWords] = useState<Vocab[]>([]); // 今日待学
   const [currentIndex, setCurrentIndex] = useState(0);
   const [combo, setCombo] = useState(0);
   const [points, setPoints] = useState(0);
   const [stats, setStats] = useState({ mastered: 0, streak: 0 });
-  const [gameState, setGameState] = useState('menu'); // 'menu' | 'learning' | 'finished'
+  const [gameState, setGameState] = useState<'menu' | 'learning' | 'finished'>('menu');
 
   // 初始化数据（首次进入加载3500词）
   useEffect(() => {
@@ -57,7 +68,7 @@ export default function App() {
       .toArray();
 
     const newWords = await db.words
-      .where('mastered').equals(false)
+      .where('mastered').equals(0 as any)
       .limit(50 - toReview.length)
       .toArray();
 
